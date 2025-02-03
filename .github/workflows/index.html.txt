@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Brief planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        line-height: 1.5;
+      }
+
+      .field-wrapper {
+        display: none;
+        margin-bottom: 20px;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: inherit;
+        resize: vertical;
+        line-height: 1.5;
+        font-size: 14px;
+        overflow-y: hidden;
+      }
+
+      button {
+        padding: 8px 16px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        position: relative;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #f5f5f5;
+      }
+
+      button:hover:not(:disabled) {
+        background-color: #f5f5f5;
+        border-color: #999;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .space-y-6 > * + * {
+        margin-top: 24px;
+      }
+
+      .input-section {
+        margin-bottom: 24px;
+      }
+
+      .flex-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+      }
+
+      .file-input {
+        flex-grow: 1;
+        margin-right: 16px;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .text-small {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .block-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      #briefInput {
+        min-height: 100px;
+      }
+
+      .error-message {
+        color: #dc2626;
+        font-size: 0.875rem;
+        margin-top: 4px;
+        display: none;
+      }
+
+      .error .error-message {
+        display: block;
+      }
+    </style>
+  </head>
+
+<body>
+    <div class="container">
+      <h1>Brief Planner</h1>
+      
+      <div class="input-section">
+        <label class="block-label">Enter or upload your brief information:</label>
+        <textarea 
+          id="briefInput" 
+          placeholder="Paste your brief here..."
+          spellcheck="true"
+        ></textarea>
+        
+        <div class="flex-row">
+          <input 
+            type="file" 
+            id="briefFile" 
+            class="file-input" 
+            accept=".txt,.doc,.docx,.pdf"
+          />
+          <button id="callGPTBtn">Run Analysis</button>
+        </div>
+        
+        <div class="text-small">
+          (The brief will be stored for future suggestions.)
+        </div>
+        <div class="error-message" id="briefError"></div>
+      </div>
+
+      <div class="grid">
+        <div class="space-y-6">
+          <div class="field-wrapper" id="wrapper-field1">
+            <label class="block-label">1. What We Know:</label>
+            <textarea id="field1" spellcheck="true"></textarea>
+            <div class="error-message" id="error-field1"></div>
+            <div class="button-group">
+              <button class="refresh-btn" id="refreshBtn1">Refresh</button>
+              <button class="next-btn" id="nextBtn1">Next</button>
+            </div>
+          </div>
+
+          <div class="field-wrapper" id="wrapper-field2">
+            <label class="block-label">2. What We Don't Know:</label>
+            <textarea id="field2" spellcheck="true"></textarea>
+            <div class="error-message" id="error-field2"></div>
+            <div class="button-group">
+              <button class="refresh-btn" id="refreshBtn2">Refresh</button>
+              <button class="next-btn" id="nextBtn2">Next</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="field-wrapper" id="wrapper-field3">
+            <label class="block-label">3. Key Question:</label>
+            <textarea id="field3" spellcheck="true"></textarea>
+            <div class="error-message" id="error-field3"></div>
+            <div class="button-group">
+              <button class="refresh-btn" id="refreshBtn3">Refresh</button>
+              <button class="next-btn" id="nextBtn3">Next</button>
+            </div>
+          </div>
+
+          <div class="field-wrapper" id="wrapper-field6">
+            <label class="block-label">4. Desired End State:</label>
+            <textarea id="field6" spellcheck="true"></textarea>
+            <div class="error-message" id="error-field6"></div>
+            <div class="button-group">
+              <button class="refresh-btn" id="refreshBtn6">Refresh</button>
+              <button class="next-btn" id="nextBtn6">Next</button>
+            </div>
+          </div>
+
+          <div class="field-wrapper" id="wrapper-field4">
+            <label class="block-label">5. Core Hypotheses:</label>
+            <textarea id="field4" spellcheck="true"></textarea>
+            <div class="error-message" id="error-field4"></div>
+            <div class="button-group">
+              <button class="refresh-btn" id="refreshBtn4">Refresh</button>
+              <button class="next-btn" id="nextBtn4">Next</button>
+            </div>
+          </div>
+
+          <div class="field-wrapper" id="wrapper-field5">
+            <label class="block-label">6. Bonus Hypotheses:</label>
+            <textarea id="field5" spellcheck="true"></textarea>
+            <div class="error-message" id="error-field5"></div>
+            <button class="refresh-btn" id="refreshBtn5">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="generatePptBtn" style="margin-top: 24px;">Generate PPT Slide</button>
+    </div>
+
+    <script>
+
+// API configuration
+      const OPENAI_API_KEY = "YOUR_API_KEY_PLACEHOLDER";
+      const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+      
+      // State management
+      let briefStored = "";
+      let answerStored = "";
+      let isProcessing = false;
+
+      // DOM elements
+      const elements = {
+        briefInput: document.getElementById("briefInput"),
+        briefFile: document.getElementById("briefFile"),
+        briefError: document.getElementById("briefError"),
+        callGPTBtn: document.getElementById("callGPTBtn"),
+        generatePptBtn: document.getElementById("generatePptBtn")
+      };
+
+      // Helper functions
+      function setButtonLoading(button, loading) {
+        if (!button) return;
+        button.disabled = loading;
+      }
+
+      function showError(elementId, message) {
+        const errorElement = document.getElementById(`error-${elementId}`);
+        if (errorElement) {
+          errorElement.textContent = message;
+          errorElement.style.display = 'block';
+        }
+      }
+
+      function clearError(elementId) {
+        const errorElement = document.getElementById(`error-${elementId}`);
+        if (errorElement) {
+          errorElement.textContent = '';
+          errorElement.style.display = 'none';
+        }
+      }
+
+      // Safe text processing
+      function sanitizeText(text) {
+        if (!text || typeof text !== 'string') return '';
+        return text.trim()
+          .replace(/[\r\n]{3,}/g, '\n\n')
+          .replace(/\t/g, '    ');
+      }
+
+      // Safely update textarea content and size
+      function updateTextArea(textarea, content) {
+        if (!textarea || !(textarea instanceof HTMLTextAreaElement)) return;
+        textarea.value = sanitizeText(content);
+        if (textarea.id !== 'briefInput') {
+          adjustTextAreaHeight(textarea);
+        }
+      }
+
+      // Adjust textarea height
+      function adjustTextAreaHeight(textarea) {
+        if (!textarea || textarea.id === 'briefInput') return;
+        textarea.style.height = 'auto';
+        const minHeight = 100;
+        const scrollHeight = textarea.scrollHeight;
+        textarea.style.height = Math.max(minHeight, scrollHeight) + 'px';
+      }
+
+      // Add height adjustment to textareas
+      document.querySelectorAll('textarea:not(#briefInput)').forEach(textarea => {
+        textarea.addEventListener('input', () => {
+          adjustTextAreaHeight(textarea);
+        });
+      });
+      
+      // Handle file upload
+      elements.briefFile.addEventListener("change", function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const content = e.target.result;
+            briefStored = content;
+            if (elements.briefInput) {
+              elements.briefInput.value = content;
+            }
+          } catch (err) {
+            console.error('File reading error:', err);
+            showError('briefInput', 'Error reading file. Please try again.');
+          }
+        };
+        reader.onerror = function() {
+          showError('briefInput', 'Error reading file. Please try again.');
+        };
+        reader.readAsText(file);
+      });
+      
+      // Show next section
+      function showNext(nextId) {
+        const wrapper = document.getElementById(nextId);
+        if (wrapper) {
+          wrapper.style.display = 'block';
+        }
+      }
+      
+      // Generation functions
+      async function makeApiCall(buttonElement, query, maxTokens = 500) {
+        setButtonLoading(buttonElement, true);
+        try {
+          const res = await fetch(OPENAI_API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "gpt-3.5-turbo",
+              messages: [{ role: "user", content: query }],
+              max_tokens: maxTokens,
+              temperature: 0.7
+            })
+          });
+          if (!res.ok) {
+            throw new Error(await res.text());
+          }
+          const data = await res.json();
+          return data.choices[0].message.content.trim();
+        } finally {
+          setButtonLoading(buttonElement, false);
+        }
+      }
+
+// Specific planning instructions (detailed query)
+      const specificQuery = `----
+Im planning for for the brief described earlier, using woolworths rewards data. Can you help me organise my thinking around it? Can you structure it based on the planning template and "dna playbook" below?
+
+----
+Below is an expanded "DNA playbook" that includes all the instructions, logic, and test steps behind creating this planning template—covering what to put in each box and how to confirm the hypotheses actually solve the key question and achieve the desired end state. This way, you can replicate the same format and style in a single prompt without any additional clarifications.
+
+1. Purpose & Structure of the Template  
+Your template consists of six boxes:
+
+- Key Question  
+- What We Know  
+- What We Don't Know  
+- Core Hypotheses  
+- "Wow" Hypotheses  
+- Desired End State  
+
+Objective: Provide a concise, visually clear summary of a situation or project in a way that can be copied directly into a PowerPoint slide or shared as a one-page overview. You want to minimize text while maximizing clarity and ensure everything ties back to solving the Key Question and achieving the Desired End State.
+
+2. Detailed Guidance for Each Box  
+1) Key Question  
+Goal: Summarize the primary challenge or opportunity in a single statement or short paragraph (1–2 lines).  
+Tone: Punchy, direct, and problem-focused.  
+Example: "What's driving the decline in [X], and how do we reverse it for sustainable growth?"
+
+2) What We Know  
+Goal: Present the current facts, data points, or observations.  
+Style: Bullet points that are factual, short, and objective—avoid speculation. Include specifics where it makes sense. Look directly at the brief when answering.
+Example:  
+- "Premium products are growing while core SKUs are losing share."  
+- "New competitor has entered the market."
+
+3) What We Don't Know  
+Goal: Call out the gaps, uncertainties, or questions that remain unanswered.  
+Style: Bullet points, each highlighting a crucial missing piece of info.
+Importance: Helps define the scope of further investigation or analysis.
+
+4) Core Hypotheses  
+Goal: List the main, most likely drivers behind the issue or challenge.
+Format: Each hypothesis should be one specific, actionable sentence that can be proven or disproven, with clear, valuable actions if true. They should be numbered and ordered with the most promising ones first.
+Example:  
+1. "High/low promos on 1kg are cannibalizing 2kg packs. – Address by adjusting promotion structure."  
+2. "Declining core SKU sales due to increased competitor activity."  
+
+5) "Wow" Hypotheses  
+Goal: Introduce broader, strategic or market-level factors that could significantly impact the situation.
+Style: Bullet points describing trends that go beyond immediate levers (price, packaging, competitor).
+Example: "Convenience formats are cannibalizing the entire category."
+Impact: If validated, a bigger strategic pivot may be necessary.
+
+6) Desired End State  
+Goal: Paint a clear, aspirational picture of success if your plan or project goes perfectly.
+Requirements: Must reference key outcomes like "Data-backed story," "Actionable recommendations," "Stakeholder alignment," etc. Include a bullet that reads verbatim: "Leave the audience wowed".
+Please list only the top 3 bullet points that best capture the desired end state, prioritized with the most promising one first.
+
+3. Testing & Tying It All Together  
+After laying out the six boxes, add a final check to confirm:
+- Do these hypotheses and insights answer the Key Question?
+- Which box addresses the main question directly?
+- If multiple hypotheses are proven, do they collectively solve or explain the problem?
+- Do they help us achieve the Desired End State?
+
+Will these bullets, when proven or refuted, generate clear, actionable next steps? Do they align stakeholders, build confidence, and effectively wow the audience? This ensures your summary is cohesive: the Key Question is fully addressed, and the solutions or insights lead directly to your aspirational Desired End State.
+
+4. Single-Prompt Example (DNA Blueprint)  
+When recreating this style for a new brief, use a single prompt that consolidates:
+A Short Background: Summarize the new brief's context (in 1–2 paragraphs).
+Explicit Instructions: "Please output in six boxes: 1) Key Question, 2) What We Know, 3) What We Don't Know, 4) Core Hypotheses, 5) 'Wow' Hypotheses, and 6) Desired End State. In box 6, include a bullet saying 'Leave the audience wowed'. Keep each box concise and focused on insightful observations. End with a short test step verifying how these hypotheses solve the question and meet the Desired End State."
+
+5. Outcome Guarantee  
+By following these instructions:
+- You'll consistently get a structured summary with bullet points that are clear and objective.
+- Each box will logically flow from "Key Question" to "Desired End State."
+- The final output will verify that the insights solve the key question and meet the aspirational goals.
+
+That's the DNA of the approach—replicating this template and style for any new brief, ensuring clarity, logic, and succinctness.`;
+
+async function generateWhatWeKnow(buttonElement) {
+        const originalBrief = elements.briefInput.value.trim();
+        if (!originalBrief) return '';
+
+        const query = `Based on the following original brief:
+${originalBrief}
+
+Please list all the current facts, data points, or observations explicitly stated in the brief. Use bullet points that are factual, short, and objective. Include specifics (such as numbers, dates, or measurable details) where it makes sense, and look directly at the brief for information. Do not include generic process or scheduling details. Output each bullet point on a new line.`;
+
+        const output = await makeApiCall(buttonElement, query, 800);
+        const field1 = document.getElementById("field1");
+        if (field1) {
+          updateTextArea(field1, output);
+        }
+        return output;
+      }
+      
+      async function generateWhatWeDontKnow(buttonElement) {
+        if (!answerStored) return '';
+
+        const query = `Based on the following planning instructions and context:
+${answerStored}
+
+Please list all the gaps, uncertainties, or unanswered questions from the brief as factual bullet points. Output each bullet point on a new line.`;
+
+        const output = await makeApiCall(buttonElement, query, 500);
+        const field2 = document.getElementById("field2");
+        if (field2) {
+          updateTextArea(field2, output);
+        }
+        return output;
+      }
+      
+      async function generateKeyQuestion(buttonElement) {
+        if (!answerStored) return '';
+
+        const query = `Based on the following context:
+${answerStored}
+
+Please provide a concise Key Question summarizing the primary challenge or opportunity from the brief in 1–2 lines. The tone should be punchy, direct, and problem-focused. Output only the key question.`;
+
+        const output = await makeApiCall(buttonElement, query, 200);
+        const field3 = document.getElementById("field3");
+        if (field3) {
+          updateTextArea(field3, output);
+        }
+        return output;
+      }
+      
+      async function generateDesiredEndState(buttonElement) {
+        if (!answerStored) return '';
+
+        const query = `Based on the following context:
+${answerStored}
+
+Please list the desired end state for the project as bullet points. Prioritize and list only the top 3 points that best capture an aspirational picture of success. The response should reference key outcomes such as "Data-backed story," "Actionable recommendations," "Stakeholder alignment," etc., and must include a bullet that reads verbatim: "Leave the audience wowed". Output each bullet point on a new line.`;
+
+        const output = await makeApiCall(buttonElement, query, 400);
+        const field6 = document.getElementById("field6");
+        if (field6) {
+          updateTextArea(field6, output);
+        }
+        return output;
+      }
+      
+      async function generateCoreHypotheses(buttonElement) {
+        const field3 = document.getElementById("field3");
+        const field6 = document.getElementById("field6");
+        if (!answerStored || !field3 || !field6) return '';
+
+        const keyQuestion = field3.value.trim();
+        const desiredEndState = field6.value.trim();
+        
+        const query = `Based on the following context, key question, and desired end state:
+
+Context:
+${answerStored}
+
+Key Question:
+${keyQuestion}
+
+Desired End State:
+${desiredEndState}
+
+Please list the main, most likely drivers behind the issue or challenge as "Core Hypotheses". Each hypothesis must be a specific, actionable statement that can be proven or disproven, with clear, valuable actions if true. Consider both the key question that needs to be answered and the desired end state we want to achieve. Output the hypotheses as numbered items, ordered with the most promising ones first. For example:
+1. "High/low promos on 1kg are cannibalizing 2kg packs – adjust promotions accordingly."
+2. "Declining core SKU sales due to increased competitor activity."
+Output each hypothesis on a new line with its number.`;
+
+        const output = await makeApiCall(buttonElement, query, 500);
+        const field4 = document.getElementById("field4");
+        if (field4) {
+          updateTextArea(field4, output);
+        }
+        return output;
+      }
+
+async function generateWowHypotheses(buttonElement) {
+        const field3 = document.getElementById("field3");
+        const field6 = document.getElementById("field6");
+        if (!answerStored || !field3 || !field6) return '';
+
+        const keyQuestion = field3.value.trim();
+        const desiredEndState = field6.value.trim();
+        
+        const query = `Based on the following context, key question, and desired end state:
+
+Context:
+${answerStored}
+
+Key Question:
+${keyQuestion}
+
+Desired End State:
+${desiredEndState}
+
+Please list the broader, strategic or market-level factors that could significantly impact the situation as "Wow Hypotheses". These should be potential game-changers that could dramatically affect our ability to address the key question and achieve the desired end state. Describe each as a bullet point, focusing on trends that go beyond immediate levers (such as price, packaging, or competitor). Output each bullet point on a new line.`;
+
+        const output = await makeApiCall(buttonElement, query, 500);
+        const field5 = document.getElementById("field5");
+        if (field5) {
+          updateTextArea(field5, output);
+        }
+        return output;
+      }
+      
+      // Button handlers
+      async function nextField1() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateWhatWeDontKnow(document.getElementById("nextBtn1"));
+            showNext('wrapper-field2');
+          } catch (err) {
+            console.error(err);
+            alert("Error generating content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      async function refreshField1() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateWhatWeKnow(document.getElementById("refreshBtn1"));
+          } catch (err) {
+            console.error(err);
+            alert("Error refreshing content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+      
+      async function nextField2() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateKeyQuestion(document.getElementById("nextBtn2"));
+            showNext('wrapper-field3');
+          } catch (err) {
+            console.error(err);
+            alert("Error generating content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      async function refreshField2() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateWhatWeDontKnow(document.getElementById("refreshBtn2"));
+          } catch (err) {
+            console.error(err);
+            alert("Error refreshing content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+      
+      async function nextField3() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateDesiredEndState(document.getElementById("nextBtn3"));
+            showNext('wrapper-field6');
+          } catch (err) {
+            console.error(err);
+            alert("Error generating content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      async function refreshField3() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateKeyQuestion(document.getElementById("refreshBtn3"));
+          } catch (err) {
+            console.error(err);
+            alert("Error refreshing content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+async function nextField4() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateWowHypotheses(document.getElementById("nextBtn4"));
+            showNext('wrapper-field5');
+          } catch (err) {
+            console.error(err);
+            alert("Error generating content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      async function nextField6() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            showNext('wrapper-field4');
+            await generateCoreHypotheses(document.getElementById("nextBtn6"));
+          } catch (err) {
+            console.error(err);
+            alert("Error generating content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      async function refreshField6() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateDesiredEndState(document.getElementById("refreshBtn6"));
+          } catch (err) {
+            console.error(err);
+            alert("Error refreshing content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      async function refreshField4() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateCoreHypotheses(document.getElementById("refreshBtn4"));
+          } catch (err) {
+            console.error(err);
+            alert("Error refreshing content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      async function refreshField5() {
+        if (!isProcessing) {
+          isProcessing = true;
+          try {
+            await generateWowHypotheses(document.getElementById("refreshBtn5"));
+          } catch (err) {
+            console.error(err);
+            alert("Error refreshing content. Please try again.");
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+      
+      // Add click event listeners
+      document.getElementById("refreshBtn1").addEventListener("click", refreshField1);
+      document.getElementById("refreshBtn2").addEventListener("click", refreshField2);
+      document.getElementById("refreshBtn3").addEventListener("click", refreshField3);
+      document.getElementById("refreshBtn4").addEventListener("click", refreshField4);
+      document.getElementById("refreshBtn5").addEventListener("click", refreshField5);
+      document.getElementById("refreshBtn6").addEventListener("click", refreshField6);
+
+      document.getElementById("nextBtn1").addEventListener("click", nextField1);
+      document.getElementById("nextBtn2").addEventListener("click", nextField2);
+      document.getElementById("nextBtn3").addEventListener("click", nextField3);
+      document.getElementById("nextBtn4").addEventListener("click", nextField4);
+      document.getElementById("nextBtn6").addEventListener("click", nextField6);
+
+// Main Run button handler
+      elements.callGPTBtn.addEventListener("click", async () => {
+        if (!isProcessing) {
+          isProcessing = true;
+          setButtonLoading(elements.callGPTBtn, true);
+          
+          try {
+            const userPrompt = elements.briefInput.value.trim();
+            if (!userPrompt) {
+              throw new Error("Please enter or upload your brief information.");
+            }
+
+            const queryPrompt = userPrompt + "\n\n" + specificQuery;
+            const res = await fetch(OPENAI_API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${OPENAI_API_KEY}`
+              },
+              body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: queryPrompt }],
+                max_tokens: 500,
+                temperature: 0.7
+              })
+            });
+
+            if (!res.ok) {
+              throw new Error(await res.text());
+            }
+
+            const data = await res.json();
+            answerStored = data.choices[0].message.content.trim();
+            await generateWhatWeKnow(elements.callGPTBtn);
+            showNext('wrapper-field1');
+          } catch (err) {
+            console.error("Error running analysis:", err);
+            alert(err.message || "Something went wrong. Please try again.");
+          } finally {
+            setButtonLoading(elements.callGPTBtn, false);
+            isProcessing = false;
+          }
+        }
+      });
+      
+      // PPT Generation
+      elements.generatePptBtn.addEventListener("click", async () => {
+        if (!isProcessing) {
+          isProcessing = true;
+          setButtonLoading(elements.generatePptBtn, true);
+          
+          try {
+            const pptx = new PptxGenJS();
+            const slide = pptx.addSlide();
+
+            // Add title
+            slide.addText("Brief Analysis", {
+              x: 0.5,
+              y: 0.25,
+              w: '90%',
+              fontSize: 24,
+              bold: true,
+              align: 'center',
+              color: '363636'
+            });
+
+            // Add table data
+            const tableData = [
+              [{ text: "Section", options: { bold: true, fill: "F5F5F5" } }, 
+               { text: "Content", options: { bold: true, fill: "F5F5F5" } }]
+            ];
+
+            const sections = [
+              { id: "field3", title: "Key Question" },
+              { id: "field1", title: "What We Know" },
+              { id: "field2", title: "What We Don't Know" },
+              { id: "field6", title: "Desired End State" },
+              { id: "field4", title: "Core Hypotheses" },
+              { id: "field5", title: "Bonus Hypotheses" }
+            ];
+
+            sections.forEach(section => {
+              const element = document.getElementById(section.id);
+              if (element && element.value.trim()) {
+                tableData.push([
+                  { text: section.title, options: { bold: true, valign: 'top' } },
+                  { text: element.value.trim(), options: { valign: 'top' } }
+                ]);
+              }
+            });
+
+            // Add table with better formatting
+            slide.addTable(tableData, {
+              x: 0.5,
+              y: 1.0,
+              w: '90%',
+              colW: [2, 8],
+              fontSize: 10,
+              autoPage: true,
+              margin: 0.1,
+              border: { type: 'solid', pt: 0.5, color: 'CFCFCF' },
+              align: 'left',
+              rowH: 0.5
+            });
+
+            await pptx.writeFile({ fileName: "Brief_Analysis.pptx" });
+          } catch (err) {
+            console.error("Error generating PowerPoint:", err);
+            alert("Error generating PowerPoint. Please try again.");
+          } finally {
+            setButtonLoading(elements.generatePptBtn, false);
+            isProcessing = false;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
